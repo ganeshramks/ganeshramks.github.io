@@ -15,7 +15,14 @@ a {
 .home{
 	width: 100%;
 	height: 50em;
-	background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url("../img/blocks.jpg") no-repeat center center fixed;
+	background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url("../img/blocks.jpg") no-repeat center center fixed;
+	background-size: cover;
+	-webkit-background-size: cover;
+}
+.home-contact{
+	width: 100%;
+	height: 36em;
+	background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url("../img/blocks.jpg") no-repeat center center fixed;
 	background-size: cover;
 	-webkit-background-size: cover;
 }
@@ -127,4 +134,16 @@ a {
 	background-size: 100%;
 	background-repeat: no-repeat;
     background-position: center center;
+}
+.contact-font{
+	color: white;
+	font-weight: bold;
+	text-align: center;
+	font-family: fantasy;
+}
+.contact-info{
+	width: 50%;
+	float: left;
+	text-align: center;
+	color: white;
 }
