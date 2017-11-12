@@ -1,5 +1,9 @@
 $(document).ready(function(){
 	
+	$("#entrochef").click(function(){
+		$("#entrochef-modal").modal('show');
+	});
+	
 	$("#1").click(function(){
 		$('#selfie-modal').modal('show');
 	});
