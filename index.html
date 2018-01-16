@@ -10,17 +10,17 @@
 	<script type="text/javascript" src="assets/js/main.js"></script>
 </head>
 <body>
-<nav class="navbar navbar-inverse">
+<nav class="navbar navbar-inverse navbar-fixed-top">
   <div class="container-fluid">
     <div class="navbar-header">
       <a class="navbar-brand" href="#">GR</a>
     </div>
     <div class="navbar-nav nav-custom">
         <li class="active"><a href="#">Home</a></li>
-        <li><a href="#Projects">Projects</a></li>
-    	<li><a href="#Accomplishments">Achievements</a></li>
-    	<li><a href="#About">About</li>
-    	<li><a href="#Contact">Contact</a></li>
+        <li><a href="#projects">Projects</a></li>
+    	<li><a href="#accomplishments">Achievements</a></li>
+    	<li><a href="#about">About</li>
+    	<li><a href="#contact">Contact</a></li>
     </div>
   </div>
 </nav>
@@ -36,7 +36,7 @@
 </div>
 
 <!--Projects-->
-<div class="projects" id="Projects">
+<div class="projects" id="projects">
 	<h1 class="proj-head">PROJECTS</h1>
 
 	<div class="project-list">
@@ -45,36 +45,32 @@
 
 		<div class="card" id="1">
 			<p class="project-title">Selfie Based Song Recommender</p>
-			<div class="card1">
-			</div>
+			<img height="80%" weight="80%" src="assets/img/selfie.png">
 		</div>
 		<div class="card" id="2">
 			<p class="project-title">Smart Office</p>
-			<div class="card2">
-			</div>
+			<img height="80%" weight="80%" src="assets/img/connected-office.png">
 		</div>
 		
 		<div class="card" id="3">
 			<p class="project-title">Room Cleaner Robot</p>
-			<div class="card3">
-			</div>
+			<img height="80%" weight="80%" src="assets/img/e-yantra.png">
 		</div>
 	
 	</div>
 <br>
 	<div class="project-list">
 		<p>
+		<br>
 		<h1 class="project-category">/ Techno-Management Projects</h1>
 		</p>
 		<div class="card" id="4">
 			<p class="project-title">Robometry, Workshop Organizer</p>
-			<div class="card4">
-			</div>
+			<img height="80%" weight="80%" src="assets/img/cogni2014.png">
 		</div>
 		<div class="card" id="5">
 			<p class="project-title">I-Square, Event Organizer</p>
-			<div class="card5">
-			</div>
+			<img height="80%" weight="80%" src="assets/img/cogni2013.png">
 		</div>
 	
 	</div>
@@ -85,8 +81,7 @@
 		</p>
 		<div class="card" id="6">
 			<p class="project-title">Guest Lectures, Pravaah</p>
-			<div class="card6">
-			</div>
+			<img height="80%" weight="80%" src="assets/img/pravaah.jpeg">
 		</div>
 		<div class="card" id="7">
 			<p class="project-title">Sponsorship Manager, Cognizance 2014</p>
@@ -193,21 +188,45 @@
 <!--Pravvah-->
 <!--Sponsorship-->
 <!--Junkyard Wars-->
-<script type="text/javascript">
-	$(function () {
-		$("#1").click(function(){
-			$('#selfie-modal').modal('show');
-		});
-		$("#2").click(function(){
-			$('#smart-modal').modal('show');
-		});
-		$("#3").click(function(){
-			$('#e-yantra-modal').modal('show');
-		});
-		$("#4").click(function(){
-			$('#robometry-modal').modal('show');
-		});
-	});
-</script>
+
+<!--Accomplishments-->
+<br>
+<div class="accomplishments" id="accomplishments">
+	<b><h1 class="proj-head">Accomplishments</h1></b>
+	<div class="accomplishments-list">
+		<p>
+			<u><h1 class="project-category" id="young-achievements">News Paper Publications (Young Achievements)</h1></u>
+		</p>
+		<div class="news-card">
+			<h1 class="project-category">/ The Hindu Publication</h1> 
+			<h4>
+				&nbsp;&nbsp;&nbsp;<a href="http://www.thehindu.com/todays-paper/tp-national/tp-karnataka/his-latest-creation-is-a-2kg-washing-machine/article3103899.ece">[Online Publication Link]</a>
+			</h4>
+			<img id="news_paper_1"></img>
+		</div>
+		<div class="news-card">
+			<h1 class="project-category">/ The Hindu - Young World Publication</h1>
+			<img id="news_paper_2"></img>
+		</div>
+		<div class="news-card">
+			<h1 class="project-category">/ Bangalore Vijay Times Publication</h1>
+			<img id="news_paper_3"></img>
+		</div>
+		<div class="news-card">
+			<h1 class="project-category">/ The Times of India Publication</h1>
+			<h2 class="project-title"> 3Ft. structure of Lord Ganesh built using Building Blocks</h2>
+			<img id="news_paper_4"></img>
+		</div>
+		<div class="news-card">
+			<h1 class="project-category">/ Deccan Herald Publication</h1>
+			<h2 class="project-title">3 Ft. structure of Lord Ganesh built using Building Blocks</h2>
+			<img id="news_paper_5"></img>
+		</div>
+		<div class="news-card">
+			<h1 class="project-category">/ Vijay Karnataka Publication</h1>
+			<img id="news_paper_6"></img>
+		</div>
+	</div>
+</div>
 </body>
 </html>
