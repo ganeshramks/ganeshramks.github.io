@@ -6,6 +6,10 @@
     position: relative;
     top: 15px;
 }
+.img-brand{
+	filter:invert(0.63);
+	height:36px;
+}
 a:hover{
 	text-decoration: none;
 }
