@@ -82,6 +82,11 @@ a {
 	box-shadow: 0 1px 1px grey;
 	cursor: pointer;
 }
+.card img{
+    width: 15.5em;
+    display: block;
+    margin: auto;
+}
 .card:hover{
 	box-shadow: 0 3px 3px grey;
 }
