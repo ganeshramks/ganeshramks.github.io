@@ -88,7 +88,7 @@ a {
     margin: auto;
 }
 .card:hover{
-	box-shadow: 0 3px 3px grey;
+	box-shadow: 0 4px 4px grey;
 }
 .news-card{
 	padding: 2%;

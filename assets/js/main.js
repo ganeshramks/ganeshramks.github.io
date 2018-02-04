@@ -19,6 +19,18 @@ $(document).ready(function(){
 	$("#4").click(function(){
 		$('#robometry-modal').modal('show');
 	});
+	$("#5").click(function(){
+		$("#isquare-modal").modal('show');
+	});
+	$("#6").click(function(){
+		$("#pravaah-modal").modal('show');
+	});
+	$("#7").click(function(){
+		$("#sponsorship-modal").modal('show');
+	});
+	$("#8").click(function(){
+		$("#junkyard-modal").modal('show');
+	});
 
 	var news_papers = ["the-hindu.jpeg", "young-world-the-hindu.jpeg", "bangalore-vijay-times.jpeg", "times-of-india.jpeg", "deccan-herald.jpeg", "vijay-karnataka.jpeg"];
 
