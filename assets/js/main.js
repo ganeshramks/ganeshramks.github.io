@@ -31,6 +31,9 @@ $(document).ready(function(){
 	$("#8").click(function(){
 		$("#junkyard-modal").modal('show');
 	});
+	$("#CRIITR").click(function(){
+		$("#criitr-modal").modal('show');
+	});
 
 	var news_papers = ["the-hindu.jpeg", "young-world-the-hindu.jpeg", "bangalore-vijay-times.jpeg", "times-of-india.jpeg", "deccan-herald.jpeg", "vijay-karnataka.jpeg"];
 

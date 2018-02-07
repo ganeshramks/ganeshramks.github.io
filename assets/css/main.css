@@ -90,6 +90,23 @@ a {
 .card:hover{
 	box-shadow: 0 4px 4px grey;
 }
+.award{
+	width: 31% !important;
+	margin: 1% !important;
+}
+.background_transparency{
+	position:relative;
+	top: -40%;
+	left: 40%;
+	z-index: -4;
+	width: 126px;
+	height: 126px;
+}
+.background_transparency img{
+	width: 126px;
+	height: 126px;
+	opacity: 0.25;
+}
 .news-card{
 	padding: 2%;
 }
@@ -154,7 +171,17 @@ a {
 	box-shadow: 0 1px 2px 0 grey;
 }
 .resp-roles:hover{
+	cursor: pointer;
 	box-shadow: 0 3px 4px 0 grey;
+}
+.dynam-cont{
+	position: relative;
+	opacity: 0;
+	-webkit-transition:.5s ease;
+	transition: .5s ease;
+}
+.resp-roles:hover .dynam-cont{
+	opacity: 1;
 }
 .contact-font{
 	color: white;
