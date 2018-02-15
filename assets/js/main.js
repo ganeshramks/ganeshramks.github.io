@@ -19,7 +19,11 @@ $(document).ready(function(){
 	$("#3").click(function(){
 		$('#e-yantra-modal').modal('show');
 	});
-		
+
+	$("#smart-charge-card").click(function(){
+		$('#smart-charge').modal('show');
+	});
+
 	$("#4").click(function(){
 		$('#robometry-modal').modal('show');
 	});
