@@ -1,5 +1,9 @@
 $(document).ready(function(){
 	
+	$("#apple-contact").hide();
+	$("#windows-contact").hide();
+	$("#hangout").show();
+
 	$("#entrochef").click(function(){
 		$("#entrochef-modal").modal('show');
 	});
@@ -43,5 +47,34 @@ $(document).ready(function(){
 		selector = '#news_paper_' +	(i + 1);
 		$(selector).width('100%').height('100%').attr('src', img_url_prefix + news_papers[i]);
 	}
+
+	//Apple and Windows Contact
+	var apple = navigator.platform.match(/(Mac|iPhone|iPod|iPad)/i)?true:false;
+	var windows = navigator.platform.match(/(Win)/i)?true:false;
+	if (apple) {
+		$("#apple-contact").show();
+		$("#windows-contact").hide();
+	}
+	if (windows) {
+		$("#apple-contact").hide();
+		$("#windows-contact").show();
+	}
+
+	//Hangout Contact
+	
+	$.ajax({
+		url : "https://apis.google.com/js/platform.js",
+		dataType : "script",
+		async : true,
+		success : function(){
+			gapi.hangout.render('hangout-div', {
+				'render' : 'createhangout',
+				'invites' : [{
+					'id' : 'ganeshram997@gmail.com',
+					'invite_type' : 'EMAIL'
+				}]
+			});
+		}
+	});
 
 });
