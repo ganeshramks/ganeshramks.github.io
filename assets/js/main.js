@@ -3,6 +3,38 @@ $(document).ready(function(){
 	$("#apple-contact").hide();
 	$("#windows-contact").hide();
 	$("#hangout").show();
+	
+	intro = [];
+	intro[0] = { "content" : "Mapping the World with Cartesian Blocks;", "classname" : "hello0" };
+	intro[1] = { "content" : "Hello There!", "classname" : "hello1" };
+	intro[2] = { "content" : "My name is Ganesh Ram.", "classname" : "hello2" };
+	
+	var l = 0;
+	var k = 0;
+	
+	function type(){
+		if (l < intro.length && k < intro[l].content.length) {
+			ele = document.getElementsByClassName(intro[l].classname)[0];
+			ele.style.display = "inline-block";
+			ele.innerHTML += intro[l].content[k];
+			ele.style.borderRight = "solid orange";
+			k++;
+			setTimeout(type, 150);
+		} else {
+			if (l < intro.length) {
+				ele.style.borderRight = "none";
+				ele.style.display = "block";
+				l++;
+				k = 0;
+				type();
+			} else {
+				ele.style.display = "inline-block";
+				ele.style.borderRight = "solid orange";
+			}
+		}
+	}
+
+	type();
 
 	$("#entrochef").click(function(){
 		$("#entrochef-modal").modal('show');
