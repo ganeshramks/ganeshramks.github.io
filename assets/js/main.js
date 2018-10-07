@@ -71,6 +71,9 @@ $(document).ready(function(){
 	$("#8").click(function(){
 		$("#junkyard-modal").modal('show');
 	});
+	$("#secretary_aries").click(function(){
+		$("#secretary_aries-modal").modal('show');
+	});
 	$("#CRIITR").click(function(){
 		$("#criitr-modal").modal('show');
 	});
