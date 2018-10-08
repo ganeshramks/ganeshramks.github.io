@@ -81,8 +81,8 @@
 		<h1 class="project-category">/ Tech Projects</h1>
 
 		<div class="card" id="1">
-			<p class="project-title">Selfie Based Song Recommender</p>
-			<img src="assets/img/selfie.png">
+			<p class="project-title">Facial Analysis - Emotion Recognition</p>
+			<img src="assets/img/emotion-collection.png">
 		</div>
 		<div class="card" id="2">
 			<p class="project-title">Smart Office</p>
@@ -175,12 +175,16 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title">Selfie Based Song Recommender</h4>
+          <h4 class="modal-title">Facial Analysis - Emotion Recognition</h4>
         </div>
         <div class="modal-body">
-          <p>Technologies Used: Theano, Python, AngularJS, Flask, AWS</p>
+          <p>Technologies Used: Tensorflow, Python, AngularJS, EC2-AWS</p>
+          <p>This project lays the foundation for a bigger project that aims at "Capturing People Emotions in Realtime while they are watching online videos".</p>
           <p>
-          	Trained a convolutional neural network on an EC2 instance to recognize emotions. A collection of 35000 pre-classified photos were used. Selfie captured in real time was passed through the trained CNN to determine the mood of the person. Based on the mood predicted appropriate song recommendations were made.
+          	A convolutional neural network is trained to ouput a certain confience across a set of emotions for a given input image.
+          </p>
+          <p>
+            The emotions recognized are {happiness, neutral, sadness, anger, surprise, fear, contempt, disgust}
           </p>
         </div>
         <div class="modal-footer">
