@@ -9,7 +9,6 @@ console.log("SAI");
 app.get('/', function(req, res){
 
 	res.status(200);
-	console.log("SAI")
 	res.setHeader("Content-Type", "text/html");
 	res.sendFile(path.join(__dirname, '/index.html'));
 
