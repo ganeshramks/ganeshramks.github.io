@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shambhavi Mahamudra Kriya</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000000;
+        }
+        .container {
+            text-align: center;
+        }
+        img {
+            max-width: 92%;
+            height: auto;
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        #status { margin-top: 15px; font-weight: bold; min-height: 1.2em; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="sadhguru.png" alt="Sadhguru Image">
+        <button style="background-color: darkred;" onclick="startTimer()">▶</button>
+        <p id="status" style="color:#ffffff"></p>
+    </div>
+
+    <script>
+        // Updated back to your requested intervals
+        const intervals = [0.2, 6, 7.15, 3.2, 6.2];
+        const stepTitles = ["Starting", "Sukha Kriya", "Aum Chanting", "Fluttering Of Breadth with slightly upturned face", "Bandhas and Observe breadth with slightly upturned face"] 
+        let step = 0;
+
+        // Initialize audio object with your file
+        const bell = new Audio('bell.mp3');
+
+        function playBell() {
+            // Rewind to start in case it's already playing
+            bell.currentTime = 0; 
+            bell.play().catch(e => console.error("Audio play failed:", e));
+        }
+
+        function startTimer() {
+            if (step >= intervals.length) {
+                document.getElementById("status").innerText = "Shambhavi complete!";
+                return;
+            }
+            
+            let mins = intervals[step];
+            document.getElementById("status").innerText = `${stepTitles[step]}`;
+            
+            setTimeout(() => {
+                playBell();
+                step++;
+                startTimer(); 
+            }, mins * 60000);
+        }
+    </script>
+</body>
+</html>
