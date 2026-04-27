@@ -30,53 +30,118 @@
             padding: 10px 20px;
             font-size: 1.2rem;
             cursor: pointer;
-            background-color: #007bff;
+            background-color: darkred;
             color: white;
             border: none;
             border-radius: 5px;
         }
-        button:hover { background-color: #0056b3; }
-        #status { margin-top: 15px; font-weight: bold; min-height: 1.2em; }
+        button:hover { background-color: #b30000; }
+        #status { margin-top: 15px; font-weight: bold; min-height: 1.2em; color: #ffffff; }
+        .nav-link { margin-top: 20px; display: block; color: #555; text-decoration: none; font-size: 0.8rem; visibility:hidden; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <!-- Files are in the same folder, so no ../ needed -->
         <img src="sadhguru.png" alt="Sadhguru Image">
-        <button style="background-color: darkred;" onclick="startTimer()">▶</button>
-        <p id="status" style="color:#ffffff"></p>
+        <button id="startBtn" onclick="startTimer()">▶</button>
+        <p id="status"></p>
+        <a href="progress.html" id="view-progress" class="nav-link">View Progress</a>
     </div>
 
     <script>
-        // Updated back to your requested intervals
-        const intervals = [0.2, 6.1, 7.15, 3.2, 6.2];
-        const stepTitles = ["Starting", "Sukha Kriya", "Aum Chanting", "Fluttering Of Breadth with slightly upturned face", "Bandhas and Observe breadth with slightly upturned face"] 
-        let step = 0;
+        // const intervals = [0.05, 0.05, 0.05, 0.05, 0.05];
+        const intervals = [0.2, 6.1, 7.45, 3.2, 6.2];
+        const stepTitles = [
+            "Starting", 
+            "Sukha Kriya", 
+            "Aum Chanting", 
+            "Fluttering Of Breath", 
+            "Bandhas & Observation"
+        ];
 
-        // Initialize audio object with your file
+        let step = 0;
         const bell = new Audio('bell.mp3');
 
+        // Helper to determine current time block
+        function getCurrentBlock() {
+            const hour = new Date().getHours();
+            return (hour < 13) ? 'morningCount' : 'eveningCount'; // 1 PM Cutoff
+        }
+
         function playBell() {
-            // Rewind to start in case it's already playing
             bell.currentTime = 0; 
             bell.play().catch(e => console.error("Audio play failed:", e));
         }
 
+        function saveProgress() {
+            const now = new Date();
+            const todayStr = now.toDateString();
+            const type = getCurrentBlock();
+            const lastDateKey = 'lastDate_' + type;
+
+            // 1. Update Session Counts
+            let currentCount = parseInt(localStorage.getItem(type) || '0');
+            localStorage.setItem(type, currentCount + 1);
+            localStorage.setItem(lastDateKey, todayStr);
+
+            // 2. Update Daily Streak
+            const lastTotalDate = localStorage.getItem('lastPracticeDate');
+            let streak = parseInt(localStorage.getItem('dailyStreak') || '0');
+
+            if (!lastTotalDate) {
+                streak = 1; 
+            } else {
+                const lastDate = new Date(lastTotalDate);
+                lastDate.setHours(0,0,0,0);
+                const todayDate = new Date(now);
+                todayDate.setHours(0,0,0,0);
+                const diffDays = (todayDate - lastDate) / (1000 * 60 * 60 * 24);
+
+                if (diffDays === 1) streak += 1; 
+                else if (diffDays > 1) streak = 1; 
+            }
+            
+            localStorage.setItem('dailyStreak', streak);
+            localStorage.setItem('lastPracticeDate', todayStr);
+
+            // 3. Redirect after 3 seconds
+            setTimeout(() => {
+                window.location.href = 'progress.html';
+            }, 3000);
+        }
+
         function startTimer() {
+            const todayStr = new Date().toDateString();
+            const type = getCurrentBlock();
+            const lastDateKey = 'lastDate_' + type;
+
+            // PREVENTION LOGIC: Check if session is already done today
+            if (localStorage.getItem(lastDateKey) === todayStr) {
+                const sessionName = (type === 'morningCount') ? "Morning" : "Evening";
+                document.getElementById("status").innerText = `You have already completed your ${sessionName} practice for today.`;
+                document.getElementById("view-progress").style.visibility = "visible";
+                return;
+            }
+
+            document.getElementById("startBtn").style.visibility = "hidden";
+
             if (step >= intervals.length) {
                 document.getElementById("status").innerText = "Shambhavi complete!";
+                saveProgress();
                 return;
             }
             
-            let mins = intervals[step];
-            document.getElementById("status").innerText = `${stepTitles[step]}`;
+            document.getElementById("status").innerText = stepTitles[step];
             
             setTimeout(() => {
                 playBell();
                 step++;
                 startTimer(); 
-            }, mins * 60000);
+            }, intervals[step] * 60000);
         }
+
     </script>
 </body>
 </html>
