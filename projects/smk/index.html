@@ -94,19 +94,26 @@
                 streak = 1; 
             } else {
                 const lastDate = new Date(lastTotalDate);
-                lastDate.setHours(0,0,0,0);
-                const todayDate = new Date(now);
-                todayDate.setHours(0,0,0,0);
-                const diffDays = (todayDate - lastDate) / (1000 * 60 * 60 * 24);
+                
+                // FIXED LOGIC: Normalize both to Midnight for a clean calendar day comparison
+                const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const lastMidnight = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
 
-                if (diffDays === 1) streak += 1; 
-                else if (diffDays > 1) streak = 1; 
+                const diffTime = todayMidnight - lastMidnight;
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 1) {
+                    streak += 1; // It was yesterday, continue streak
+                } else if (diffDays > 1) {
+                    streak = 1; // Skipped a day, restart streak
+                }
+                // If diffDays is 0 (already practiced today), streak stays the same
             }
             
             localStorage.setItem('dailyStreak', streak);
             localStorage.setItem('lastPracticeDate', todayStr);
 
-            // 3. Redirect after 3 seconds
+            // 3. Redirect after 7 seconds
             setTimeout(() => {
                 window.location.href = 'progress.html';
             }, 7000);
