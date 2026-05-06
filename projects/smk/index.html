@@ -40,7 +40,7 @@
         button:hover { background-color: #b30000; }
         #status { margin-top: 15px; font-weight: bold; min-height: 1.2em; color: #ffffff; }
         /* Style for the countdown timer */
-        #timer-display { font-size: 1rem; color: #ffcc00; margin-top: 10px; font-family: monospace; visibility:hidden; }
+        #timer-display { font-size: 1rem; color: #ffcc00; margin-top: 10px; font-family: monospace; height: 1.2rem; }
         .nav-link { margin-top: 20px; display: block; color: #555; text-decoration: none; font-size: 0.8rem; visibility:hidden; }
     </style>
 </head>
@@ -57,8 +57,8 @@
     </div>
 
     <script>
-        // const intervals = [0.05, 0.05, 0.05, 0.05, 0.05];
-        const intervals = [0.2, 6.1, 7.45, 3.2, 6.2];
+        const intervals = [0.05, 0.05, 0.05, 0.05, 0.05];
+        // const intervals = [0.2, 6.1, 7.45, 3.2, 6.2];
         const stepTitles = [
             "Starting", 
             "Sukha Kriya", 
@@ -156,12 +156,11 @@
             const todayStr = new Date().toDateString();
             const type = getCurrentBlock();
             const lastDateKey = 'lastDate_' + type;
-            document.getElementById("timer-display").style.visibility = "visible";
 
             // PREVENTION LOGIC: Check if session is already done today
             if (localStorage.getItem(lastDateKey) === todayStr) {
                 const sessionName = (type === 'morningCount') ? "Morning" : "Evening";
-                document.getElementById("status").innerText = `You have already completed your ${sessionName} practice for today.`;
+                document.getElementById("status").innerText = `You have already completed your ${sessionName} practice today.`;
                 document.getElementById("view-progress").style.visibility = "visible";
                 return;
             }
@@ -169,7 +168,7 @@
             document.getElementById("startBtn").style.visibility = "hidden";
 
             if (step >= intervals.length) {
-                document.getElementById("status").innerText = "Shambhavi complete!";
+                document.getElementById("status").innerText = "Shambhavi Mahamudra Kriya complete!";
                 document.getElementById("timer-display").innerText = ""; 
                 saveProgress();
                 return;
