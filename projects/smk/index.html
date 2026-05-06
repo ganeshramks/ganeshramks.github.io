@@ -39,6 +39,8 @@
         }
         button:hover { background-color: #b30000; }
         #status { margin-top: 15px; font-weight: bold; min-height: 1.2em; color: #ffffff; }
+        /* Style for the countdown timer */
+        #timer-display { font-size: 1rem; color: #ffcc00; margin-top: 10px; font-family: monospace; visibility:hidden; }
         .nav-link { margin-top: 20px; display: block; color: #555; text-decoration: none; font-size: 0.8rem; visibility:hidden; }
     </style>
 </head>
@@ -49,6 +51,8 @@
         <img src="sadhguru.png" alt="Sadhguru Image">
         <button id="startBtn" onclick="startTimer()">▶</button>
         <p id="status"></p>
+        <!-- Element to show the countdown -->
+        <div id="timer-display">Shambhavi Mahamudra Kriya</div>
         <a href="progress.html" id="view-progress" class="nav-link">View Progress</a>
     </div>
 
@@ -64,6 +68,7 @@
         ];
 
         let step = 0;
+        let countdownInterval; // Variable to hold the per-second interval
         const bell = new Audio('bell.mp3');
 
         // Helper to determine current time block
@@ -121,10 +126,37 @@
             }, 7000);
         }
 
+        function updateCountdown(seconds) {
+            const display = document.getElementById("timer-display");
+            
+            clearInterval(countdownInterval);
+            
+            let timeRemaining = seconds;
+
+            const render = () => {
+                const mins = Math.floor(timeRemaining / 60);
+                const secs = Math.round(timeRemaining % 60);
+                display.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            };
+
+            render();
+
+            countdownInterval = setInterval(() => {
+                timeRemaining--;
+                if (timeRemaining <= 0) {
+                    clearInterval(countdownInterval);
+                    display.innerText = ""; // Clear when done
+                } else {
+                    render();
+                }
+            }, 1000);
+        }
+
         function startTimer() {
             const todayStr = new Date().toDateString();
             const type = getCurrentBlock();
             const lastDateKey = 'lastDate_' + type;
+            document.getElementById("timer-display").style.visibility = "visible";
 
             // PREVENTION LOGIC: Check if session is already done today
             if (localStorage.getItem(lastDateKey) === todayStr) {
@@ -138,17 +170,22 @@
 
             if (step >= intervals.length) {
                 document.getElementById("status").innerText = "Shambhavi complete!";
+                document.getElementById("timer-display").innerText = ""; 
                 saveProgress();
                 return;
             }
             
             document.getElementById("status").innerText = stepTitles[step];
             
+            // Start the visual countdown
+            const totalSeconds = intervals[step] * 60;
+            updateCountdown(totalSeconds);
+
             setTimeout(() => {
                 playBell();
                 step++;
                 startTimer(); 
-            }, intervals[step] * 60000);
+            }, totalSeconds * 1000);
         }
 
     </script>
