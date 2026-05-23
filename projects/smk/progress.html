@@ -13,6 +13,9 @@
         .streak-count { font-size: 5rem; color: #ffcc00; font-weight: bold; }
         .label { text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; color: #888; }
         
+        /* Styled text label for the timestamp */
+        .timestamp-label { margin-top: 10px; font-size: 0.9rem; color: #aaaaaa; font-style: italic; }
+        
         .footer-nav { margin-top: 40px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
         a { color: #9e9e9e; text-decoration: none; font-size: 0.9rem; }
         
@@ -49,6 +52,9 @@
                 <div id="e-count" class="count">0</div>
             </div>
         </div>
+
+        <!-- Interactive timestamp container -->
+        <div id="last-practiced" class="timestamp-label">Last practiced: Never</div>
     </div>
 
     <div class="footer-nav">
@@ -57,6 +63,46 @@
     </div>
 
     <script>
+        function getRelativeTimeString(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            
+            if (diffMs < 0) return "Just now"; 
+
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHrs = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHrs / 24);
+
+            if (diffDays >= 1) {
+                const remainingHrs = diffHrs % 24;
+                return `${diffDays}d ${remainingHrs}h ago`;
+            }
+            
+            if (diffHrs >= 1) {
+                const remainingMins = diffMins % 60;
+                return `${diffHrs}h ${remainingMins}m ago`;
+            }
+            
+            if (diffMins >= 1) {
+                return `${diffMins}m ago`;
+            }
+
+            return "Just now";
+        }
+
+        function formatExactTime(date) {
+            const dateStr = date.toDateString();
+            let hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Handle midnight (0 hours)
+            const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+            
+            return `${dateStr}, ${hours}:${minutesStr} ${ampm}`;
+        }
+
         function updateDisplay() {
             document.getElementById('m-count').innerText = localStorage.getItem('morningCount') || '0';
             document.getElementById('e-count').innerText = localStorage.getItem('eveningCount') || '0';
@@ -68,16 +114,27 @@
             if (lastPracticeDate) {
                 const lastDate = new Date(lastPracticeDate);
                 const today = new Date();
-                today.setHours(0,0,0,0);
-                lastDate.setHours(0,0,0,0);
                 
-                const diffTime = Math.abs(today - lastDate);
+                // Copy dates to strip hours for absolute streak day-boundary calculation
+                const streakToday = new Date(today);
+                const streakLast = new Date(lastDate);
+                streakToday.setHours(0,0,0,0);
+                streakLast.setHours(0,0,0,0);
+                
+                const diffTime = Math.abs(streakToday - streakLast);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                 if (diffDays > 1) {
                     streak = 0;
                     localStorage.setItem('dailyStreak', '0');
                 }
+
+                // Format and display the dual timestamp output string
+                const exactTimeStr = formatExactTime(lastDate);
+                const timeAgoStr = getRelativeTimeString(lastDate);
+                document.getElementById('last-practiced').innerText = `Last practiced: ${exactTimeStr} (${timeAgoStr})`;
+            } else {
+                document.getElementById('last-practiced').innerText = "Last practiced: Never";
             }
             document.getElementById('streak').innerText = streak;
         }

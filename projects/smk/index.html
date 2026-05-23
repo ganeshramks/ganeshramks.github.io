@@ -118,7 +118,8 @@
             }
             
             localStorage.setItem('dailyStreak', streak);
-            localStorage.setItem('lastPracticeDate', todayStr);
+            // Modified to store full detailed timestamp string instead of date-only
+            localStorage.setItem('lastPracticeDate', now.toString());
 
             // 3. Redirect after 7 seconds
             setTimeout(() => {
@@ -153,9 +154,25 @@
         }
 
         function startTimer() {
-            const todayStr = new Date().toDateString();
+            const now = new Date();
+            const todayStr = now.toDateString();
             const type = getCurrentBlock();
             const lastDateKey = 'lastDate_' + type;
+
+            // GAP CHECK LOGIC: Enforce a minimum 5-hour gap from the last practice timestamp
+            const lastTotalDate = localStorage.getItem('lastPracticeDate');
+            if (lastTotalDate) {
+                const lastPracticeTime = new Date(lastTotalDate);
+                const timeDiffMs = now - lastPracticeTime;
+                const hoursPassed = timeDiffMs / (1000 * 60 * 60);
+
+                if (hoursPassed < 5) {
+                    const remainingHours = (5 - hoursPassed).toFixed(1);
+                    document.getElementById("status").innerText = `You can practice again after ${remainingHours}h`;
+                    document.getElementById("view-progress").style.visibility = "visible";
+                    return;
+                }
+            }
 
             // PREVENTION LOGIC: Check if session is already done today
             if (localStorage.getItem(lastDateKey) === todayStr) {
