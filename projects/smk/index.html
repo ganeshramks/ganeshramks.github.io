@@ -49,16 +49,23 @@
     <div class="container">
         <!-- Files are in the same folder, so no ../ needed -->
         <img src="sadhguru.png" alt="Sadhguru Image">
-        <button id="startBtn" onclick="startTimer()">▶</button>
-        <p id="status"></p>
-        <!-- Element to show the countdown -->
-        <div id="timer-display">Shambhavi Mahamudra Kriya</div>
-        <a href="progress.html" id="view-progress" class="nav-link">View Progress</a>
+        <img src="flame.webp" style="
+            position: absolute;
+            top: 80%;
+            left: 46%;
+        ">
+        <div style="width: 70%; position: relative; left: 85%;">
+            <button id="startBtn" onclick="startTimer()">▶</button>
+            <p id="status"></p>
+            <!-- Element to show the countdown -->
+            <div id="timer-display">Shambhavi Mahamudra Kriya</div>
+            <a href="progress.html" id="view-progress" class="nav-link">View Progress</a>
+        </div>
     </div>
 
     <script>
-        // const intervals = [0.05, 0.05, 0.05, 0.05, 0.05];
-        const intervals = [0.2, 6.1, 6.35, 3.2, 6];
+        const intervals = [0.05, 0.05, 0.05, 0.05, 0.05];
+        // const intervals = [0.2, 6.1, 6.35, 3.2, 6];
         const stepTitles = [
             "Starting", 
             "Sukha Kriya", 
