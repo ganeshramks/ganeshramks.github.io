@@ -58,11 +58,12 @@ const workoutConfigs = {
   },
   tricep_ext: {
     name: "Tricep Extension",
-    primaryLabel: "ARMS LOCKED OUT (Top)",
-    secondaryLabel: "ARMS BENT BACK (Bottom)",
+    // FIXED: Explicitly set top as arms fully extended up, and bottom as bent behind head
+    primaryLabel: "ARMS EXTENDED UP (Start)",
+    secondaryLabel: "FOREARMS BENT BACKWARD (Bottom)",
     computeReference: (kp) => {
-      let lw = kp.find(k => k.name === 'left_wrist');
-      let rw = kp.find(k => k.name === 'right_wrist');
+      let lw = kp.find(k => k.name === 'left_wrist' || k.part === 'leftWrist');
+      let rw = kp.find(k => k.name === 'right_wrist' || k.part === 'rightWrist');
       return { x: (lw.x + rw.x) / 2, y: (lw.y + rw.y) / 2 };
     }
   }
@@ -124,23 +125,41 @@ async function init() {
 
 function handleWorkoutChange(e) {
   currentWorkout = e.target.value;
-  topCalibY = null; bottomCalibY = null; hasCalibrated = false; gameStarted = false;
+  if (!currentWorkout) return;
+
+  // FIXED: Clear game states right away to wipe the Game Over overlay
+  gameOver = false;
+  gameStarted = false;
+
+  topCalibY = null; 
+  bottomCalibY = null; 
+  hasCalibrated = false; 
+  
   document.getElementById('start-game-btn').disabled = true;
+  updateButtonLabels();
+  
   document.getElementById('status').innerText = `Switched to ${workoutConfigs[currentWorkout].name}. Click Auto Calibration!`;
   document.getElementById('status').style.color = "#ffb300";
 }
 
+
 function updateButtonLabels() {
   const conf = workoutConfigs[currentWorkout];
-  document.getElementById('calib-top-btn').innerText = `1. Calibrate ${conf.primaryLabel}`;
-  document.getElementById('calib-bottom-btn').innerText = `2. Calibrate ${conf.secondaryLabel}`;
+  
+  // FIXED: Targets the new unified button instead of the old deleted button IDs
+  const autoCalibBtn = document.getElementById('auto-calib-btn');
+  if (autoCalibBtn) {
+    autoCalibBtn.innerText = `⚙️ Start Auto Calibration (${conf.name})`;
+  }
 }
+
 
 
 function startAutoCalibrationFlow() {
   if (isCalibratingNow || isGameCountingDown) return;
   isCalibratingNow = true;
   gameStarted = false;
+  gameOver = false; // Wipes game over immediately
   topCalibY = null;
   bottomCalibY = null;
   hasCalibrated = false;
@@ -150,7 +169,7 @@ function startAutoCalibrationFlow() {
   const statusText = document.getElementById('status');
   const conf = workoutConfigs[currentWorkout];
 
-  // --- PHASE 1: COUNTDOWN TO STAND TALL ---
+  // --- PHASE 1: COUNTDOWN TO START POSE (STANDING TALL) ---
   let topCountdown = 5;
   statusText.innerText = `1. GET READY: Move into your ${conf.primaryLabel}!`;
   statusText.style.color = "#2196f3";
@@ -163,69 +182,145 @@ function startAutoCalibrationFlow() {
     } else {
       clearInterval(topTimer);
       
-      // Capture top position instantly at second 0
-      topCalibY = referenceY; 
-      playSound('calibrate');
-      display.innerText = "📸 TOP SNAPPED!";
-      
-      // Wait 1.5 seconds for visual feedback, then trigger Phase 2 automatically
-      setTimeout(() => {
-        
-        // --- PHASE 2: COUNTDOWN TO LOWER DOWN ---
-        let bottomCountdown = 5;
-        statusText.innerText = `2. DROP DOWN NOW: Move into your ${conf.secondaryLabel}!`;
-        statusText.style.color = "#ff1744";
-        display.innerText = bottomCountdown;
+      // --- POSTURE GATE FOR THE STANDING START POSE ---
+      let checkTopLoop = setInterval(() => {
+        let isTopValid = true;
 
-        let bottomTimer = setInterval(() => {
-          bottomCountdown--;
-          if (bottomCountdown > 0) {
-            display.innerText = bottomCountdown;
-          } else {
-            clearInterval(bottomTimer);
-            
-            // --- FIXED: POSTURE HOLD LOOP (WILL NOT LOCK UNTIL YOU ACTUALLY SQUAT) ---
-            let checkBottomLoop = setInterval(() => {
-              let isBottomValid = true;
-              
-              if (currentWorkout === "squat" && window.lastRawPoses) {
-                let kp = window.lastRawPoses.keypoints || window.lastRawPoses;
-                if (Array.isArray(kp)) {
-                  // In camera pixels, referenceY INCREASES as your chest/hips move closer to the floor
-                  // Calculate your downward displacement distance relative to your standing topCalibY
-                  let dropTravelPixels = referenceY - topCalibY;
+        if (window.lastRawPoses) {
+          let kp = window.lastRawPoses.keypoints || window.lastRawPoses;
+          if (Array.isArray(kp)) {
+            let lh = kp.find(k => k.name === 'left_hip' || k.part === 'leftHip');
+            let rh = kp.find(k => k.name === 'right_hip' || k.part === 'rightHip');
+            let lk = kp.find(k => k.name === 'left_knee' || k.part === 'leftKnee');
+            let rk = kp.find(k => k.name === 'right_knee' || k.part === 'rightKnee');
+            let ls = kp.find(k => k.name === 'left_shoulder' || k.part === 'leftShoulder');
+            let rs = kp.find(k => k.name === 'right_shoulder' || k.part === 'rightShoulder');
 
-                  // ENFORCE SQUAT DEPTH GATING:
-                  // Your body center must drop significantly below your standing height anchor.
-                  // If you haven't traveled downward by at least 25-30 pixels, hold the shutter open!
-                  if (dropTravelPixels < 30) {
-                    isBottomValid = false;
-                    display.innerText = "HOLD IT... SQUAT DEEPER!";
-                  }
-                }
+            // Resolve visibility scores safely
+            let hScore = lh && rh ? Math.min(lh.score || lh.confidence || 0, rh.score || rh.confidence || 0) : 0;
+            let kScore = lk && rk ? Math.min(lk.score || lk.confidence || 0, rk.score || rk.confidence || 0) : 0;
+
+            if (currentWorkout === "squat") {
+              // A. Visibility Guard: Force full lower body visibility before snapping Top stance
+              if (!lh || !rh || !lk || !rk || hScore < 0.6 || kScore < 0.6) {
+                isTopValid = false;
+                display.innerText = "⚠️ KNEES NOT VISIBLE - STEP BACK";
+                return;
               }
 
-              // The exact millisecond your posture is validated, snap the camera shutter!
-              if (isBottomValid) {
-                clearInterval(checkBottomLoop);
-                bottomCalibY = referenceY; // Lock Bottom Coordinate
-                
-                playSound('calibrate');
-                display.innerText = "📸 ALL SET! LOCKED IN!";
-                
-                setTimeout(() => { display.innerText = ""; }, 1500);
-                isCalibratingNow = false;
-                checkCalibrationReady();
-              }
-            }, 100); // Poll your skeleton position 10 times a second
+              let shoulderWidth = Math.abs(ls.x - rs.x);
+              let hipWidth = Math.abs(lh.x - rh.x);
 
+              // B. Stance Guard: If legs are completely joined together, reject the pose
+              if (hipWidth < shoulderWidth * 0.5) {
+                isTopValid = false;
+                display.innerText = "HOLD IT... STAND WITH FEET APART!";
+                return;
+              }
+
+              let verticalDistance = Math.abs(((lk.y + rk.y)/2) - ((lh.y + rh.y)/2));
+              let stanceRatio = verticalDistance / shoulderWidth;
+              if (stanceRatio < 0.75) {
+                isTopValid = false;
+                display.innerText = "HOLD IT... STAND UP TALLER!";
+              }
+            }
+            // Maintain old Bicep Curl checks safely
+            else if (currentWorkout === "bicep_curl") {
+              let lw = kp.find(k => k.name === 'left_wrist' || k.part === 'leftWrist');
+              let rw = kp.find(k => k.name === 'right_wrist' || k.part === 'rightWrist');
+              let le = kp.find(k => k.name === 'left_elbow' || k.part === 'leftElbow');
+              let re = kp.find(k => k.name === 'right_elbow' || k.part === 'rightElbow');
+              if (lw && rw && le && re && lw.score > 0.3) {
+                if ((lw.y + rw.y)/2 < (le.y + re.y)/2 + 15) { isTopValid = false; display.innerText = "HOLD IT... EXTEND ARMS DOWN!"; }
+              } else { isTopValid = false; display.innerText = "⚠️ WRISTS NOT VISIBLE - STEP BACK"; }
+            }
+            // Maintain old Tricep Extension checks safely
+            else if (currentWorkout === "tricep_ext") {
+              let lw = kp.find(k => k.name === 'left_wrist' || k.part === 'leftWrist');
+              let rw = kp.find(k => k.name === 'right_wrist' || k.part === 'rightWrist');
+              if (lw && rw && ls && rs && lw.score > 0.3) {
+                if (((lw.y + rw.y)/2) > ((ls.y + rs.y)/2) - 60) { isTopValid = false; display.innerText = "HOLD IT... EXTEND ARMS UP!"; }
+              } else { isTopValid = false; display.innerText = "⚠️ UPPER BODY OBSCURED - STEP BACK"; }
+            }
           }
-        }, 1000);
+        }
 
-      }, 1500);
+        if (isTopValid) {
+          clearInterval(checkTopLoop);
+          topCalibY = referenceY; 
+          playSound('calibrate');
+          display.innerText = "📸 START POSE SNAPPED!";
+
+          setTimeout(() => {
+            // --- PHASE 2: COUNTDOWN TO END POSE (SQUAT DOWN) ---
+            let bottomCountdown = 5;
+            statusText.innerText = `2. MOVE NOW: Hold your ${conf.secondaryLabel} position!`;
+            statusText.style.color = "#ff1744";
+            display.innerText = bottomCountdown;
+
+            let bottomTimer = setInterval(() => {
+              bottomCountdown--;
+              if (bottomCountdown > 0) {
+                display.innerText = bottomCountdown;
+              } else {
+                clearInterval(bottomTimer);
+                
+                // --- POSTURE GATE FOR THE END POSE (SQUAT DOWN) ---
+                let checkBottomLoop = setInterval(() => {
+                  let isBottomValid = true;
+                  
+                  if (window.lastRawPoses) {
+                    let kp = window.lastRawPoses.keypoints || window.lastRawPoses;
+                    if (Array.isArray(kp)) {
+                      let lk = kp.find(k => k.name === 'left_knee' || k.part === 'leftKnee');
+                      let rk = kp.find(k => k.name === 'right_knee' || k.part === 'rightKnee');
+                      let kScore = lk && rk ? Math.min(lk.score || lk.confidence || 0, rk.score || rk.confidence || 0) : 0;
+
+                      // 🔒 FIXED CRITICAL BUG: Freeze and deny bottom calibration completely if knees go out of frame
+                      if (currentWorkout === "squat" && (!lk || !rk || kScore < 0.6)) {
+                        isBottomValid = false;
+                        display.innerText = "⚠️ KNEES NOT VISIBLE - STEP BACK";
+                        return;
+                      }
+
+                      if (currentWorkout === "bicep_curl") {
+                        if (topCalibY - referenceY < 40) { isBottomValid = false; display.innerText = "HOLD IT... CURL YOUR ARMS UP!"; }
+                      } 
+                      else if (currentWorkout === "tricep_ext" || currentWorkout === "squat" || currentWorkout === "pushup") {
+                        let dropTravelPixels = referenceY - topCalibY;
+                        if (currentWorkout === "tricep_ext" && dropTravelPixels < 20) {
+                          isBottomValid = false; display.innerText = "HOLD IT... BEND FOREARMS BACKWARD!";
+                        } else if (currentWorkout === "squat" && dropTravelPixels < 30) {
+                          isBottomValid = false; display.innerText = "HOLD IT... DROP DOWN DEEPER!";
+                        } else if (dropTravelPixels < 30 && currentWorkout !== "tricep_ext") {
+                          isBottomValid = false; display.innerText = "HOLD IT... DROP DOWN DEEPER!";
+                        }
+                      }
+                    }
+                  }
+
+                  if (isBottomValid) {
+                    clearInterval(checkBottomLoop);
+                    bottomCalibY = referenceY; 
+                    playSound('calibrate');
+                    display.innerText = "📸 ALL SET! SUITE UNLOCKED!";
+                    
+                    setTimeout(() => { display.innerText = ""; }, 1500);
+                    isCalibratingNow = false;
+                    checkCalibrationReady();
+                  }
+                }, 100);
+              }
+            }, 1000);
+          }, 1500);
+        }
+      }, 100);
     }
   }, 1000);
 }
+
+
 
 
 
@@ -248,23 +343,16 @@ function triggerGameStartSequence() {
 
   const display = document.getElementById('countdown');
   const statusText = document.getElementById('status');
-  const formText = document.getElementById('form-feedback');
   
-  // 🔒 POSTURE RESTART LOCK: Direct validation lookups
-  if (window.lastRawPoses) {
-    // FIXED: Pass the full person wrapper object instead of raw kp array to match our Form Coach expectations
-    let isFormValid = evaluateFormCoaching(window.lastRawPoses);
-    
-    // If joints are hidden (Coaching text prints a warning "⚠️"), stop the game from launching
-    if (!isFormValid || formText.innerText.includes("⚠️")) {
-      display.innerText = "❌ GET IN POSITION FIRST!";
-      statusText.innerText = "Cannot start! Please step back and stand fully in view of the camera.";
-      statusText.style.color = "#ff1744";
-      return; 
-    }
+  // 🔒 POSTURE RESTART LOCK: Only block if tracking is completely lost
+  if (!window.lastRawPoses) {
+    display.innerText = "❌ GET IN POSITION FIRST!";
+    statusText.innerText = "Cannot start! No tracking data detected. Stand in view of the camera.";
+    statusText.style.color = "#ff1744";
+    return; 
   }
 
-  // --- Proceed with game countdown if visibility checks pass ---
+  // --- Proceed with game countdown smoothly ---
   isGameCountingDown = true;
   gameStarted = true;
   gameOver = false;
@@ -306,6 +394,7 @@ function triggerGameStartSequence() {
     }
   }, 1000);
 }
+
 
 
 
@@ -365,11 +454,10 @@ async function detectPose() {
 function evaluateFormCoaching(incomingData) {
   const formText = document.getElementById('form-feedback');
   
-  // FIXED: Extract the actual flat keypoints array matrix dynamically 
-  // safely handles whether the model returns [0].keypoints or flat arrays
+  // Safely extract the flat keypoints array matrix dynamically 
   let kp = incomingData.keypoints || incomingData;
-  if (incomingData && incomingData[0] && incomingData[0].keypoints) {
-    kp = incomingData[0].keypoints;
+  if (incomingData && incomingData.keypoints) {
+    kp = incomingData.keypoints;
   }
 
   // Safety falloff: if data isn't compiled yet, flag visibility warning
@@ -379,7 +467,7 @@ function evaluateFormCoaching(incomingData) {
     return false;
   }
   
-  // Extract tracking joints safely from our normalized keypoint matrix layout
+  // Extract tracking joints safely from normalized keypoint matrix layout
   let ls = kp.find(k => k.name === 'left_shoulder' || k.part === 'leftShoulder');
   let rs = kp.find(k => k.name === 'right_shoulder' || k.part === 'rightShoulder');
   let lh = kp.find(k => k.name === 'left_hip' || k.part === 'leftHip');
@@ -408,7 +496,16 @@ function evaluateFormCoaching(incomingData) {
   
   // --- 2. SQUAT FORM RULES ---
   else if (currentWorkout === "squat") {
-    if (!ls || !rs || !lh || !rh || !lk || !rk) {
+    let leftKneeScore = lk ? (lk.score !== undefined ? lk.score : lk.confidence) : 0;
+    let rightKneeScore = rk ? (rk.score !== undefined ? rk.score : rk.confidence) : 0;
+    
+    if (!lk || !rk || leftKneeScore < 0.65 || rightKneeScore < 0.65) {
+      formText.innerText = "⚠️ KNEES NOT VISIBLE - PLEASE STEP BACK";
+      formText.style.color = "#ffb300";
+      return false;
+    }
+    
+    if (!ls || !rs || !lh || !rh) {
       formText.innerText = "⚠️ STEP BACK - ENTIRE BODY MUST BE VISIBLE";
       formText.style.color = "#ffb300";
       return false; 
@@ -447,11 +544,45 @@ function evaluateFormCoaching(incomingData) {
       return true;
     }
   }
+
+  // --- 4. FIXED: OVERHEAD TRICEP EXTENSION FORM RULES ---
+  else if (currentWorkout === "tricep_ext") {
+    // Check if elbows and wrists are actually in frame
+    let elbowScore = le && re ? Math.min(le.score || le.confidence || 0, re.score || re.confidence || 0) : 0;
+    let wristScore = lw && rw ? Math.min(lw.score || lw.confidence || 0, rw.score || rw.confidence || 0) : 0;
+
+    if (!ls || !rs || !le || !re || !lw || !rw || elbowScore < 0.4 || wristScore < 0.4) {
+      formText.innerText = "⚠️ STEP BACK - ENTIRE ARMS AND UPPER BODY MUST BE VISIBLE";
+      formText.style.color = "#ffb300";
+      return false; 
+    }
+    
+    let elbowWidth = Math.abs(le.x - re.x);
+    let shoulderWidth = Math.abs(ls.x - rs.x);
+    let wristMidY = (lw.y + rw.y) / 2;
+    let shoulderMidY = (ls.y + rs.y) / 2;
+
+    // A. Form Guard: Check if user completely drops their arms below shoulder level
+    if (wristMidY > shoulderMidY) {
+      formText.innerText = "❌ KEEP ARMS OVERHEAD! DON'T DROP HANDS DOWN";
+      formText.style.color = "#ff1744";
+      return true;
+    }
+
+    // B. Form Guard: Check if elbows flare outwards past a safe alignment multiplier (1.45x shoulder space)
+    if (elbowWidth > shoulderWidth * 1.45) {
+      formText.innerText = "❌ ELBOWS FLARING WIDE! KEEP THEM TUCKED NEXT TO EARS";
+      formText.style.color = "#ff1744";
+      return true;
+    }
+  }
   
+  // If no validation errors are flagged across any active exercise profile, pass with green flags
   formText.innerText = "✅ EXCELLENT FORM!";
   formText.style.color = "#2ed573";
   return true;
 }
+
 
 
 
