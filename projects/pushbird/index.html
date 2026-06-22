@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arcade Fitness Suite</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #1e1e24;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+    }
+    h1 { margin-bottom: 5px; color: #64ffda; }
+    .status-panel { margin: 5px; font-size: 1.1rem; font-weight: bold; }
+    .controls { display: flex; flex-wrap: wrap; gap: 15px; margin: 10px; align-items: center; }
+    
+    /* Dropdown Selector styling */
+    select {
+      padding: 10px 16px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: 2px solid #333;
+      border-radius: 6px;
+      background: #2a2a35;
+      color: white;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus { border-color: #64ffda; }
+
+    button {
+      padding: 10px 16px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .btn-top { background: #4caf50; color: white; }
+    .btn-bottom { background: #f44336; color: white; }
+    .btn-start { background: #2196f3; color: white; }
+    button:hover { filter: brightness(0.9); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #game-container { position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden; width: 640px; height: 480px; }
+    video, canvas { position: absolute; top: 0; left: 0; }
+  </style>
+</head>
+<body>
+  <h1>Arcade Fitness Suite</h1>
+  
+  <div class="controls">
+    <label for="workout-select" style="font-weight: bold;">Select Exercise:</label>
+    <select id="workout-select">
+      <option value="pushup">Standard Pushups</option>
+      <option value="squat">Bodyweight Squats</option>
+      <option value="bicep_curl">Bicep Curls (Standing)</option>
+      <option value="tricep_ext">Overhead Tricep Extension</option>
+    </select>
+
+    <!-- Unified Calibration Button -->
+    <button class="btn-top" id="auto-calib-btn">⚙️ Start Auto Calibration</button>
+    <button class="btn-start" id="start-game-btn" disabled>3. Start Game</button>
+  </div>
+
+
+  <div class="status-panel">Game Status: <span id="status" style="color: #ffb300;">Initializing...</span></div>
+  <div class="status-panel" style="font-size: 1.3rem; margin-top: 5px;">Form Coach: <span id="form-feedback" style="color: #2ed573;">Waiting for selection...</span></div>
+
+  <!-- Real-time countdown tracker overlay panel -->
+  <div id="countdown" style="font-size: 32px; font-weight: bold; color: #ff1744; margin: 5px; height: 45px;"></div>
+
+  <div id="game-container">
+    <video id="webcam" width="640" height="480" autoplay playsinline style="position: absolute; left: -9999px;"></video>
+    <canvas id="output-canvas" width="640" height="480"></canvas>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
