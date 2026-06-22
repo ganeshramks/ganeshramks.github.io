@@ -1,0 +1,53 @@
+name: Build and Deploy Pushbird Game
+
+on:
+  # 🕹️ CHANGED: Removes automatic pushes and forces a manual click trigger on GitHub
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js Environment (Using Node 18)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: projects/pushbird/package.json
+
+      - name: Install Project Dependencies
+        run: |
+          cd projects/pushbird
+          npm install
+
+      - name: Build Static Production Assets with Vite
+        run: |
+          cd projects/pushbird
+          npm run build
+
+      - name: Setup GitHub Pages Deployment Configuration
+        uses: actions/configure-pages@v5
+
+      - name: Upload Compiled Static Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'projects/pushbird/dist'
+
+      - name: Deploy Live to GitHub Pages Server Environment
+        id: deployment
+        uses: actions/deploy-pages@v4
