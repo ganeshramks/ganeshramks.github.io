@@ -34,32 +34,28 @@ jobs:
           cd projects/pushbird
           npm install
 
-      # FIXED: 1. Create a master staging area folder
-      #        2. Copy your ENTIRE main portfolio repository into it first (restoring your website)
-      #        3. Compile the Vite game inside the subfolder, completely preserving your main paths
       - name: Build Static Production Assets with Vite
         run: |
+          # 1. Create a master staging area folder
           mkdir -p staging_deploy
           
-          # Copy your existing main portfolio files, avoiding loop copies of the deployment folder
+          # 2. Copy your ENTIRE main portfolio repository into it first
           rsync -arv --exclude='staging_deploy' --exclude='.git' --exclude='.github' ./ staging_deploy/
           
-          # Move inside and compile the sub-project game files
+          # 3. Move inside the sub-project directory
           cd projects/pushbird
-          npm run build
           
-          # Inject the compiled game files safely back into the main portfolio's subfolder
-          mkdir -p ../../staging_deploy/projects/pushbird
-          cp -r dist/* ../../staging_deploy/projects/pushbird/
+          # 4. Compile the Vite game directly into the staging subfolder using an absolute path.
+          # This completely overwrites the raw, uncompiled index.html with the production assets.
+          npm run build -- --outDir "$GITHUB_WORKSPACE/staging_deploy/projects/pushbird"
 
       - name: Setup GitHub Pages Deployment Configuration
         uses: actions/configure-pages@v5
 
-      # FIXED: Tell GitHub to upload the entire integrated staging directory containing both modules
       - name: Upload Compiled Static Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'staging_deploy' # Deploys your portfolio at root, and the game inside its subfolder
+          path: 'staging_deploy'
 
       - name: Deploy Live to GitHub Pages Server Environment
         id: deployment
