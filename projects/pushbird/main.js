@@ -85,7 +85,10 @@ let birdY = 240, targetBirdY = 240;
 const birdX = 150, birdSize = 34;
 
 let pipes = [];
-const pipeWidth = 70, pipeGap = 160, pipeSpeed = 3;
+const pipeWidth = 70, pipeSpeed = 2.3; //3
+let pipeGap = 160;
+let pipeSpawnInterval = 110;
+
 let frameCounter = 0;
 
 // --- Timer Configs ---
@@ -420,7 +423,20 @@ async function detectPose() {
         let mirroredX = canvas.width - centerRef.x;
 
         // Evaluates form and returns false if required joints are not visible
-        let isBodyFullyVisible = evaluateFormCoaching(kp.keypoints);
+        // CHANGED: Form Coach only runs during active gameplay or calibration countdowns
+        // When it is Game Over, it bypasses evaluation and turns off form warnings
+        let isBodyFullyVisible = true; 
+        if (!gameOver) {
+          isBodyFullyVisible = evaluateFormCoaching(kp.keypoints);
+        } else {
+          // Clear out stale form coach warning alerts when you are resting
+          const formText = document.getElementById('form-feedback');
+          if (formText) {
+            formText.innerText = "⏸️ ROUND OVER - RESTING";
+            formText.style.color = "#b0bec5"; // Neutral muted gray
+          }
+        }
+
 
         ctx.beginPath(); ctx.arc(mirroredX, referenceY, 11, 0, 2 * Math.PI);
         ctx.fillStyle = isBodyFullyVisible ? '#ff4757' : '#ff9800'; ctx.fill();
@@ -583,40 +599,137 @@ function evaluateFormCoaching(incomingData) {
   return true;
 }
 
-
-
-
 function runGameEngine() {
   birdY = birdY + (targetBirdY - birdY) * 0.15;
-  ctx.beginPath(); ctx.arc(birdX, birdY, birdSize / 2, 0, 2 * Math.PI);
-  ctx.fillStyle = '#ffeb3b'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 2; ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.arc(birdX + 6, birdY - 4, 2, 0, 2 * Math.PI); ctx.fillStyle = '#000000'; ctx.fill();
+
+  // =========================================================================
+  // 🐦 RETRO CANVAS ART BIRD CHARACTER ASSEMBLY
+  // =========================================================================
+  ctx.save();
+  ctx.translate(birdX, birdY);
+  
+  ctx.beginPath();
+  ctx.arc(0, 0, birdSize / 2, 0, 2 * Math.PI);
+  ctx.fillStyle = '#ffeb3b'; 
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 2.5;
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath(); ctx.arc(5, -4, 6, 0, 2 * Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(7, -4, 2.5, 0, 2 * Math.PI); ctx.fillStyle = '#000000'; ctx.fill();
+
+  ctx.beginPath(); ctx.moveTo(12, -1); ctx.lineTo(24, 3); ctx.lineTo(12, 7); ctx.closePath();
+  ctx.fillStyle = '#ff9800'; ctx.fill(); ctx.stroke();
+
+  ctx.beginPath(); ctx.ellipse(-6, 2, 8, 5, Math.PI / 4, 0, 2 * Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.stroke();
+  
+  ctx.restore();
+
+  // =========================================================================
+  // ⚙️ FIXED DYNAMIC DIFFICULTY & WINDOW GAP ADJUSTMENTS
+  // =========================================================================
+  if (score >= 5 && score < 10) {
+    pipeSpawnInterval = 65; // Red Mode: Squeeze pipe spawning frequency closer together
+    pipeGap = 135;           // FIXED: Narrow the vertical flight opening for the cardio burst
+  } else if (score >= 10) {
+    pipeSpawnInterval = 140; // Hold Mode: Give extra travel space between long tunnels
+    pipeGap = 145;           // FIXED: Balanced tight window to enforce an exact isometric hold height
+  } else {
+    pipeSpawnInterval = 110; // Normal Mode
+    pipeGap = 160;           // Base calibration standard gap spacing
+  }
 
   if (!isGameCountingDown) {
     frameCounter++;
-    if (frameCounter % 110 === 0) {
-      let topH = Math.random() * (canvas.height - pipeGap - 80) + 40;
-      pipes.push({ x: canvas.width, topHeight: topH, passed: false });
-    }
-    for (let i = pipes.length - 1; i >= 0; i--) {
-      let p = pipes[i]; p.x -= pipeSpeed;
-      ctx.fillStyle = '#4caf50';
-      ctx.fillRect(p.x, 0, pipeWidth, p.topHeight);
-      ctx.fillRect(p.x, p.topHeight + pipeGap, pipeWidth, canvas.height - (p.topHeight + pipeGap));
+    
+    // Spawns obstacles dynamically based on our adaptive frame intervals
+    if (frameCounter % pipeSpawnInterval === 0) {
+      // Maximum height variance leaving a tiny 10px margin at screen boundaries
+      let topH = Math.random() * (canvas.height - pipeGap - 40) + 10;
+      
+      let pipeType = "green"; 
+      let lengthMultiplier = 1;
 
-      if (bxCollides(birdX, birdY, birdSize / 2, p)) { gameOver = true; playSound('crash'); if (timerInterval) clearInterval(timerInterval); }
-      if (!p.passed && p.x + pipeWidth < birdX) { score++; p.passed = true; playSound('score'); }
-      if (p.x + pipeWidth < 0) pipes.splice(i, 1);
+      if (score >= 5 && score < 10) {
+        pipeType = "red"; 
+      } else if (score >= 10) {
+        pipeType = "hold"; 
+        lengthMultiplier = 2.2; // Extends the tunnel width forcing a long muscle hold
+        
+        // Lock the next adjacent pipe height to force a continuous flat hold position
+        if (pipes.length > 0) topH = pipes[pipes.length - 1].topHeight;
+      }
+
+      pipes.push({ 
+        x: canvas.width, 
+        topHeight: topH, 
+        passed: false,
+        type: pipeType,
+        width: pipeWidth * lengthMultiplier,
+        currentGap: pipeGap // FIXED: Attach the current adaptive gap size to this specific pipe instance
+      });
+    }
+    
+    for (let i = pipes.length - 1; i >= 0; i--) {
+      let p = pipes[i]; 
+      p.x -= pipeSpeed;
+
+      // Draw the stylized top and bottom components based on the active color profile configuration
+      drawClassicPipe(p.x, 0, p.width, p.topHeight, true, p.type);
+      let lowerPipeTopY = p.topHeight + p.currentGap; // Use the attached pipe instance gap
+      let lowerPipeHeight = canvas.height - lowerPipeTopY;
+      drawClassicPipe(p.x, lowerPipeTopY, p.width, lowerPipeHeight, false, p.type);
+
+      // Collision evaluation matrix
+      if (bxCollidesWithVariableWidth(birdX, birdY, birdSize / 2, p)) { 
+        gameOver = true; 
+        playSound('crash'); 
+        if (timerInterval) clearInterval(timerInterval); 
+      }
+      
+      if (!p.passed && p.x + p.width < birdX) { 
+        score++; 
+        p.passed = true; 
+        playSound('score'); 
+      }
+      
+      if (p.x + p.width < 0) pipes.splice(i, 1);
     }
   }
 
+  // --- Render HUD Graphics Panels ---
   ctx.fillStyle = '#ffffff'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'left';
   ctx.fillText(`Score: ${score}`, 20, 40);
+
+  // Print Difficulty Phase Banner Overlays
+  ctx.font = 'bold 16px sans-serif';
+  if (score >= 5 && score < 10) {
+    ctx.fillStyle = '#ff1744'; ctx.fillText(`🔴 DIFFICULT`, 20, 70);
+  } else if (score >= 10) {
+    ctx.fillStyle = '#ffb300'; ctx.fillText(`💥 HOLD POSE`, 20, 70);
+  } else {
+    ctx.fillStyle = '#2ed573'; ctx.fillText(`🟢 STEADY`, 20, 70);
+  }
+  
   let min = Math.floor(elapsedSeconds / 60), sec = elapsedSeconds % 60;
   ctx.fillStyle = '#64ffda'; ctx.textAlign = 'right';
   ctx.fillText(`⏱️ ${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`, canvas.width - 20, 40);
   ctx.textAlign = 'left';
 }
+
+// Updated safety hitbox compiler to evaluate the specific structural gap size attached to each unique hurdle instance
+function bxCollidesWithVariableWidth(bx, by, bradius, pipe) {
+  if (bx + bradius > pipe.x && bx - bradius < pipe.x + pipe.width) {
+    if (by - bradius < pipe.topHeight || by + bradius > pipe.topHeight + pipe.currentGap) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+
 
 function bxCollides(bx, by, bradius, pipe) {
   if (bx + bradius > pipe.x && bx - bradius < pipe.x + pipeWidth) {
@@ -652,6 +765,61 @@ function playSound(t) {
 }
 function mapRange(v, l1, h1, l2, h2) { return l2 + (h2 - l2) * (v - l1) / (h1 - l1); }
 function constrainValue(v, min, max) { return Math.min(Math.max(v, min), max); }
+
+// =========================================================================
+// 🎨 RETRO 3D SHADED CYLINDRICAL PIPE RENDERING UTILITY
+// =========================================================================
+function drawClassicPipe(x, y, width, height, isTopPipe) {
+  if (height <= 0) return;
+
+  ctx.save();
+  
+  // 1. Draw Master Cylinder Base Body (Bright Classic Arcade Green)
+  ctx.fillStyle = '#73bf2e';
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 2.5;
+  ctx.fillRect(x, y, width, height);
+  ctx.strokeRect(x, y, width, height);
+
+  // 2. Render 3D Longitudinal Highlight Shading Lines (Metallic sheen effect)
+  // Left side deep dark green shadow edge overlay
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ctx.fillRect(x, y, width * 0.15, height);
+
+  // Core bright glossy white reflection sheen streak striping
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.fillRect(x + (width * 0.22), y, width * 0.12, height);
+  
+  // Right side subtle shadow accent overlay
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+  ctx.fillRect(x + (width * 0.8), y, width * 0.12, height);
+
+  // 3. Render the Wide Red-and-Green Cylinder Cap Rim
+  const capHeight = 32;
+  const capExtendedWidth = 6; // Rims flare outwards slightly past the pipe shaft walls
+  let capX = x - capExtendedWidth;
+  let capWidth = width + (capExtendedWidth * 2);
+  let capY = isTopPipe ? (y + height - capHeight) : y;
+
+  // Render Cap Base (Brick Red base detailing rim layer trim band structure)
+  ctx.fillStyle = '#d82828'; // Vibrant Arcade Red Rim base coloring
+  ctx.fillRect(capX, capY, capWidth, capHeight);
+  ctx.strokeRect(capX, capY, capWidth, capHeight);
+
+  // Apply matching cylindrical metallic reflection layers on top of the Cap Rim
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ctx.fillRect(capX, capY, capWidth * 0.15, capHeight);
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.fillRect(capX + (capWidth * 0.22), capY, capWidth * 0.12, capHeight);
+
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+  ctx.fillRect(capX + (capWidth * 0.8), capY, capWidth * 0.12, capHeight);
+
+  ctx.restore();
+}
+
+
 
 window.onload = init;
 
