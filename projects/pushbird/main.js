@@ -108,7 +108,7 @@ async function init() {
 
   detector = await poseDetection.createDetector(poseDetection.SupportedModels.BlazePose, { runtime: 'tfjs', modelType: 'lite' });
 
-  document.getElementById('status').innerText = "Pose Engine Loaded! Select Workout & Calibrate.";
+  document.getElementById('status').innerText = "Pose Engine Loaded! Choose your workout and click Start Game.";
   document.getElementById('status').style.color = "#ffb300";
 
   // Bind Dynamic Menu Changer
@@ -118,10 +118,20 @@ async function init() {
   handleWorkoutChange({ target: document.getElementById('workout-select') });
 
   // Bind Control Buttons
-  document.getElementById('auto-calib-btn').onclick = startAutoCalibrationFlow;
-  document.getElementById('start-game-btn').onclick = triggerGameStartSequence;
+  document.getElementById('start-game-btn').onclick = startOrRunGame;
 
   detectPose();
+}
+
+
+
+function startOrRunGame() {
+  if (isCalibratingNow || isGameCountingDown) return;
+  if (!hasCalibrated) {
+    startAutoCalibrationFlow();
+  } else {
+    triggerGameStartSequence();
+  }
 }
 
 
@@ -138,22 +148,14 @@ function handleWorkoutChange(e) {
   bottomCalibY = null; 
   hasCalibrated = false; 
   
-  document.getElementById('start-game-btn').disabled = true;
-  updateButtonLabels();
-  
-  document.getElementById('status').innerText = `Switched to ${workoutConfigs[currentWorkout].name}. Click Auto Calibration!`;
-  document.getElementById('status').style.color = "#ffb300";
-}
-
-
-function updateButtonLabels() {
-  const conf = workoutConfigs[currentWorkout];
-  
-  // FIXED: Targets the new unified button instead of the old deleted button IDs
-  const autoCalibBtn = document.getElementById('auto-calib-btn');
-  if (autoCalibBtn) {
-    autoCalibBtn.innerText = `⚙️ Start Auto Calibration (${conf.name})`;
+  const startBtn = document.getElementById('start-game-btn');
+  if (startBtn) {
+    startBtn.disabled = false;
+    startBtn.innerText = `🎮 Start Game (${workoutConfigs[currentWorkout].name})`;
   }
+  
+  document.getElementById('status').innerText = `Switched to ${workoutConfigs[currentWorkout].name}. Click 'Start Game' to calibrate & play!`;
+  document.getElementById('status').style.color = "#ffb300";
 }
 
 
@@ -205,7 +207,7 @@ function startAutoCalibrationFlow() {
 
             if (currentWorkout === "squat") {
               // A. Visibility Guard: Force full lower body visibility before snapping Top stance
-              if (!lh || !rh || !lk || !rk || hScore < 0.6 || kScore < 0.6) {
+              if (!lh || !rh || !lk || !rk || hScore < 0.6 || kScore < 0.6 || lk.y >= 470 || rk.y >= 470 || lh.y >= 470 || rh.y >= 470) {
                 isTopValid = false;
                 display.innerText = "⚠️ KNEES NOT VISIBLE - STEP BACK";
                 return;
@@ -281,7 +283,7 @@ function startAutoCalibrationFlow() {
                       let kScore = lk && rk ? Math.min(lk.score || lk.confidence || 0, rk.score || rk.confidence || 0) : 0;
 
                       // 🔒 FIXED CRITICAL BUG: Freeze and deny bottom calibration completely if knees go out of frame
-                      if (currentWorkout === "squat" && (!lk || !rk || kScore < 0.6)) {
+                      if (currentWorkout === "squat" && (!lk || !rk || kScore < 0.6 || lk.y >= 470 || rk.y >= 470)) {
                         isBottomValid = false;
                         display.innerText = "⚠️ KNEES NOT VISIBLE - STEP BACK";
                         return;
@@ -334,9 +336,13 @@ function checkCalibrationReady() {
   if (topCalibY !== null && bottomCalibY !== null) {
     pushupThreshold = (topCalibY + bottomCalibY) / 2;
     hasCalibrated = true;
-    document.getElementById('status').innerText = `${workoutConfigs[currentWorkout].name} Fully Ready! Click '3. Start Game'.`;
+    document.getElementById('status').innerText = `${workoutConfigs[currentWorkout].name} Calibrated! Auto-starting game...`;
     document.getElementById('status').style.color = "#2ed573";
     document.getElementById('start-game-btn').disabled = false;
+    
+    setTimeout(() => {
+      triggerGameStartSequence();
+    }, 1500);
   }
 }
 
@@ -515,13 +521,13 @@ function evaluateFormCoaching(incomingData) {
     let leftKneeScore = lk ? (lk.score !== undefined ? lk.score : lk.confidence) : 0;
     let rightKneeScore = rk ? (rk.score !== undefined ? rk.score : rk.confidence) : 0;
     
-    if (!lk || !rk || leftKneeScore < 0.65 || rightKneeScore < 0.65) {
+    if (!lk || !rk || leftKneeScore < 0.65 || rightKneeScore < 0.65 || lk.y >= 470 || rk.y >= 470) {
       formText.innerText = "⚠️ KNEES NOT VISIBLE - PLEASE STEP BACK";
       formText.style.color = "#ffb300";
       return false;
     }
     
-    if (!ls || !rs || !lh || !rh) {
+    if (!ls || !rs || !lh || !rh || lh.y >= 470 || rh.y >= 470) {
       formText.innerText = "⚠️ STEP BACK - ENTIRE BODY MUST BE VISIBLE";
       formText.style.color = "#ffb300";
       return false; 
@@ -821,5 +827,9 @@ function drawClassicPipe(x, y, width, height, isTopPipe) {
 
 
 
-window.onload = init;
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  init();
+} else {
+  window.addEventListener('load', init);
+}
 

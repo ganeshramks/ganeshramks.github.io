@@ -42,8 +42,6 @@
       cursor: pointer;
       transition: background 0.2s, opacity 0.2s;
     }
-    .btn-top { background: #4caf50; color: white; }
-    .btn-bottom { background: #f44336; color: white; }
     .btn-start { background: #2196f3; color: white; }
     button:hover { filter: brightness(0.9); }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -55,7 +53,7 @@
   <h1>Arcade Fitness Suite</h1>
   
   <div class="controls">
-    <label for="workout-select" style="font-weight: bold;">Select Exercise:</label>
+    <label for="workout-select" style="font-weight: bold;">Select:</label>
     <select id="workout-select">
       <option value="pushup">Standard Pushups</option>
       <option value="squat">Bodyweight Squats</option>
@@ -63,9 +61,8 @@
       <option value="tricep_ext">Overhead Tricep Extension</option>
     </select>
 
-    <!-- Unified Calibration Button -->
-    <button class="btn-top" id="auto-calib-btn">⚙️ Start Auto Calibration</button>
-    <button class="btn-start" id="start-game-btn" disabled>3. Start Game</button>
+    <!-- One single Start Game button -->
+    <button class="btn-start" id="start-game-btn">🎮 Start Game</button>
   </div>
 
 
